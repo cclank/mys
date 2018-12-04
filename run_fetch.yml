@@ -1,0 +1,25 @@
+---
+- hosts: all
+#  strategy: free
+  gather_facts: no
+  vars: 
+   var1: No error messages file
+   dir_var: /tmp/tmp
+  remote_user: root
+  tasks:
+  - name: run
+    script: ./filter_error.sh
+    register: script
+#  - debug: var=script
+    ignore_errors: True
+  - name: no error file
+    debug: msg="{{var1}}"
+    when: script.stdout == "No 'IO Error' error message in '/var/log/messages'.\r\n"
+  - name: fetch  
+    fetch: 
+        src: /tmp/error_info.tar.gz
+        dest: "{{dir_var}}"
+    when: script.stdout == "The error message was successfully filtered.\r\n"
+  - name: clear
+    shell: rm -rf /tmp/error_info.tar.gz
+    when: script.stdout == "The error message was successfully filtered.\r\n" 
